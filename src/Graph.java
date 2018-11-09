@@ -1,63 +1,49 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 public class Graph {
 
-    private List<Vertex> allVertices;
-    private List<Edge> allEdges;
+    private List<Vertex> vertexList;
+    private List<Adjacency> adjacencyList;
 
     public Graph() {
-        this.allVertices = new ArrayList<>();
-        this.allEdges = new ArrayList<>();
+        this.vertexList = new ArrayList<>();
+        this.adjacencyList = new ArrayList<>();
     }
 
-    public boolean addVertex(String key, String data) {
+    public void addVertex(String key, String data) {
         Vertex newVertex = new Vertex(key, data);
-        return this.allVertices.add(newVertex);
+        this.vertexList.add(newVertex);
+
+        Adjacency adjacency = new Adjacency(key);
+        this.adjacencyList.add(adjacency);
     }
 
-    public boolean addVertex(String key, String data, String[] foundVertexKeys) {
-        Vertex newVertex = new Vertex(key, data);
-        this.allVertices.add(newVertex);
-
-        Vertex foundVertex;
-        for (String foundVertexKey : foundVertexKeys) {
-            foundVertex = Edge.findAdjacent(foundVertexKey, this.allVertices);
-            if (foundVertex != null) {
-                boolean addStatus = this.allEdges.add(new Edge(newVertex.key, foundVertex.key));
-                if (!addStatus) {
-                    return false;
-                }
-            } else {
-                return false;
+    public void addAdjacency(String key, String adjacentKey) {
+        for (Adjacency adjacency : this.adjacencyList) {
+            if (adjacency.key.equals(key)) {
+                adjacency.adjacentList.add(new Adjacent(adjacentKey));
+            }
+            if (adjacency.key.equals(adjacentKey)) {
+                adjacency.adjacentList.add(new Adjacent(key));
             }
         }
-
-        return true;
     }
 
-    public boolean addVertex(String key, String data, Adjacency[] adjacency) {
-        Vertex newVertex = new Vertex(key, data);
-        this.allVertices.add(newVertex);
-
-        Vertex foundVertex;
-        for (Adjacency adjacent : adjacency) {
-            foundVertex = Edge.findAdjacent(adjacent.vertexKey, this.allVertices);
-            if (foundVertex != null) {
-                boolean addStatus = this.allEdges.add(new Edge(newVertex.key, foundVertex.key, adjacent.weight));
-                if (!addStatus) {
-                    return false;
-                }
-            } else {
-                return false;
+    public void addAdjacency(String key, String adjacentKey, int weight) {
+        for (Adjacency adjacency : this.adjacencyList) {
+            if (adjacency.key.equals(key)) {
+                adjacency.adjacentList.add(new Adjacent(adjacentKey, weight));
+            }
+            if (adjacency.key.equals(adjacentKey)) {
+                adjacency.adjacentList.add(new Adjacent(key, weight));
             }
         }
-
-        return true;
     }
 
     public boolean findVertex(String key) {
-        for (Vertex currentVertex : this.allVertices) {
+        for (Vertex currentVertex : this.vertexList) {
             if (currentVertex.key.equals(key)) {
                 return true;
             }
@@ -66,7 +52,7 @@ public class Graph {
     }
 
     public Vertex getVertex(String key) {
-        for (Vertex currentVertex : this.allVertices) {
+        for (Vertex currentVertex : this.vertexList) {
             if (currentVertex.key.equals(key)) {
                 System.out.println("-----------------------------------------");
                 System.out.println("Vertex key : " + currentVertex.key);
@@ -78,37 +64,42 @@ public class Graph {
         return null;
     }
 
-    public boolean deleteVertex(String key) {
-        boolean successDeleteVertex = false;
-        boolean successDeleteEdge = false;
-        for (int i = 0; i < this.allVertices.size(); i++) {
-            if (this.allVertices.get(i).key.equals(key)) {
-                this.allVertices.remove(i);
-                successDeleteVertex = true;
-            }
-        }
-        for (int i = 0; i < this.allEdges.size(); i++) {
-            if (this.allEdges.get(i).key.equals(key) || this.allEdges.get(i).adjacentKey.equals(key)) {
-                this.allEdges.remove(i);
-                successDeleteEdge = true;
+    public void deleteVertex(String key) {
+        for (int i = 0; i < this.vertexList.size(); i++) {
+            if (this.vertexList.get(i).key.equals(key)) {
+                this.vertexList.remove(i);
             }
         }
 
-        return successDeleteEdge && successDeleteVertex;
+        deleteAdjacent(key);
     }
 
-    public boolean deleteEdge(String key, String adjacentKey) {
-        for (int i = 0; i < this.allEdges.size(); i++) {
-            if (this.allEdges.get(i).key.equals(key) && this.allEdges.get(i).adjacentKey.equals(adjacentKey)) {
-                this.allEdges.remove(i);
-                return true;
-            } else if (this.allEdges.get(i).key.equals(adjacentKey) && this.allEdges.get(i).adjacentKey.equals(key)) {
-                this.allEdges.remove(i);
-                return true;
+    public void deleteAdjacent(String key) {
+        for (Adjacency anAdjacencyList : this.adjacencyList) {
+            for (int j = 0; j < anAdjacencyList.adjacentList.size(); j++) {
+                if (anAdjacencyList.adjacentList.get(j).key.equals(key)) {
+                    anAdjacencyList.adjacentList.remove(j);
+                }
             }
         }
+    }
 
-        return false;
+    public void deleteAdjacency(String key, String adjacentKey) {
+        for (Adjacency adjacency : this.adjacencyList) {
+            if (adjacency.key.equals(key)) {
+                for (int i = 0; i < adjacency.adjacentList.size(); i++) {
+                    if (adjacency.adjacentList.get(i).key.equals(adjacentKey)) {
+                        adjacency.adjacentList.remove(i);
+                    }
+                }
+            } else if (adjacency.key.equals(adjacentKey)) {
+                for (int i = 0; i < adjacency.adjacentList.size(); i++) {
+                    if (adjacency.adjacentList.get(i).key.equals(key)) {
+                        adjacency.adjacentList.remove(i);
+                    }
+                }
+            }
+        }
     }
 
     public void breadthFirstSearch(String startKey) {
@@ -116,36 +107,28 @@ public class Graph {
     }
 
     public void printAll() {
-        for (Vertex currentVertex : this.allVertices) {
-            System.out.println("-----------------------------------------");
-            System.out.println("Vertex key : " + currentVertex.key);
-            System.out.println("Vertex data : " + currentVertex.data);
+        System.out.println("-----------------------------------------");
+        for (Vertex vertex : this.vertexList) {
+            System.out.println("Vertex key : " + vertex.key);
+            System.out.println("Vertex data : " + vertex.data);
             System.out.println("Adjacent vertices : [ ");
-            for (Edge currentEdge : this.allEdges) {
-                if (currentEdge.key.equals(currentVertex.key)) {
-                    System.out.println("    {");
-                    if (currentEdge.weight != 0) {
-                        System.out.println("        Vertex key : " + currentEdge.adjacentKey);
-                        System.out.println("        Weight : " + currentEdge.weight + ",");
+            for (Adjacency adjacency : this.adjacencyList) {
+                if (adjacency.key.equals(vertex.key)) {
+                    for (Adjacent adjacent : adjacency.adjacentList) {
+                        System.out.println("    {");
+                        if (adjacent.weight != 0) {
+                            System.out.println("        Vertex key : " + adjacent.key);
+                            System.out.println("        Weight : " + adjacent.weight + ",");
+                            System.out.println("    },");
+                            continue;
+                        }
+                        System.out.println("        Vertex key : " + adjacent.key + ", ");
                         System.out.println("    },");
-                        continue;
                     }
-                    System.out.println("        Vertex key : " + currentEdge.adjacentKey + ", ");
-                    System.out.println("    },");
-                } else if (currentEdge.adjacentKey.equals(currentVertex.key)) {
-                    System.out.println("    {");
-                    if (currentEdge.weight != 0) {
-                        System.out.println("        Vertex key : " + currentEdge.key);
-                        System.out.println("        Weight : " + currentEdge.weight + ",");
-                        System.out.println("    },");
-                        continue;
-                    }
-                    System.out.println("        Vertex key : " + currentEdge.key + ", ");
-                    System.out.println("    },");
                 }
             }
             System.out.println("]");
-            System.out.println("-----------------------------------------\n");
+            System.out.println("-----------------------------------------");
         }
     }
 }
