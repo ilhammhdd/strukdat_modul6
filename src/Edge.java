@@ -1,13 +1,13 @@
-public class Adjacent {
+public class Edge {
     String key;
     int weight;
 
-    public Adjacent(String key, int weight) {
+    public Edge(String key, int weight) {
         this.key = key;
         this.weight = weight;
     }
 
-    public Adjacent(String key) {
+    public Edge(String key) {
         this.key = key;
     }
 }
